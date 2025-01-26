@@ -1,27 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databases } from "@/app/lib/appwrite";
 import { config } from "@/app/config";
-import { hasMasterRole } from "@/app/lib/auth";
 import { Query } from "node-appwrite";
-import type { UserData } from "@/app/types";
+import { getServerSession } from "next-auth";
+import { checkAccess } from "@/app/lib/access-control";
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
-  try {
-    const userData = JSON.parse(
-      request.headers.get("x-user-data") || "{}"
-    ) as UserData;
+const BATCH_SIZE = 100;
 
-    if (!hasMasterRole(userData.roles)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+async function fetchAllStatics() {
+  // First get total count
+  const countResponse = await databases.listDocuments(
+    config.appwrite.databaseId,
+    config.appwrite.staticsCollectionId,
+    [Query.limit(1)]
+  );
+  const total = countResponse.total;
+  console.log(`[API] Found ${total} total static assignments to fetch`);
 
+  // Skip if no records exist
+  if (total === 0) {
+    return [];
+  }
+
+  // Fetch all documents in batches
+  const batches = Math.ceil(total / BATCH_SIZE);
+  const allStatics = [];
+
+  for (let i = 0; i < batches; i++) {
+    console.log(
+      `[API] Fetching statics batch ${
+        i + 1
+      }/${batches} (${BATCH_SIZE} per batch)`
+    );
     const response = await databases.listDocuments(
       config.appwrite.databaseId,
       config.appwrite.staticsCollectionId,
-      [Query.orderAsc("group")]
+      [
+        Query.limit(BATCH_SIZE),
+        Query.offset(i * BATCH_SIZE),
+        Query.orderAsc("group"),
+      ]
     );
+    allStatics.push(...response.documents);
+  }
 
-    return NextResponse.json({ groups: response.documents });
+  return allStatics;
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  try {
+    const session = await getServerSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!checkAccess.isMaster(session.user)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const statics = await fetchAllStatics();
+    return NextResponse.json({ groups: statics });
   } catch (error) {
     console.error("Error fetching static groups:", error);
     return NextResponse.json(

@@ -1,11 +1,14 @@
 import type { Member, VodTracking, Static, UniqueValues } from "./index";
 import type { DroppableProvided, DraggableProvided } from "@hello-pangea/dnd";
+import type { ClassColors } from "./classes";
 
 export interface FilterValues {
   guild: string;
   primary_weapon: string;
   secondary_weapon: string;
   has_thread: string;
+  nameSearch: string;
+  showEditable: boolean;
 }
 
 export interface FiltersProps {
@@ -17,18 +20,24 @@ export interface FiltersProps {
 export interface MemberItemProps {
   member: Member;
   index: number;
-  isUpdateInProgress: boolean;
+  updatingMembers?: Set<string>;
+  classColors: ClassColors;
 }
 
 export interface StaticGroupProps {
   group: number;
   members: Member[];
-  isUpdating: boolean;
+  updatingMembers?: Set<string>;
+  classColors: ClassColors;
+  selectedGuild: string;
+  rowMaxMembers?: number;
 }
 
 export interface VodTableProps {
   members: Member[];
   vodTracking: Record<string, VodTracking>;
+  notesInput: Record<string, string>;
+  gearScoreInput: Record<string, string>;
   onVodCheck: (
     discordId: string,
     checked: boolean,
@@ -67,4 +76,10 @@ export interface DroppableProps {
 
 export interface DraggableProps {
   provided: DraggableProvided;
+}
+
+export interface MemberListProps {
+  members: Member[];
+  updatingMembers: Set<string>;
+  classColors: ClassColors;
 }

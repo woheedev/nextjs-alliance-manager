@@ -1,4 +1,4 @@
-import { Select, Paper, Group } from "@mantine/core";
+import { Select, Paper, Group, TextInput, Switch, Box } from "@mantine/core";
 import type { FiltersProps, FilterValues } from "@/app/types/components";
 
 export function Filters({
@@ -6,16 +6,25 @@ export function Filters({
   uniqueValues,
   disabled,
 }: FiltersProps) {
-  const handleFilterChange = (field: keyof FilterValues, value: string) => {
+  const handleFilterChange = (
+    field: keyof FilterValues,
+    value: string | boolean
+  ) => {
     onFilterChange((prev) => ({
       ...prev,
-      [field]: value || "",
+      [field]: value,
     }));
   };
 
   return (
     <Paper p="lg" withBorder>
       <Group justify="center" gap="md" wrap="wrap">
+        <TextInput
+          placeholder="Search by Name"
+          onChange={(e) => handleFilterChange("nameSearch", e.target.value)}
+          w={200}
+          disabled={disabled}
+        />
         <Select
           data={[
             { value: "", label: "All Guilds" },
@@ -71,6 +80,19 @@ export function Filters({
           w={200}
           disabled={disabled}
         />
+        <Box
+          w={200}
+          display="flex"
+          style={{ alignItems: "center", justifyContent: "center" }}
+        >
+          <Switch
+            label="Show Editable Only"
+            onChange={(e) =>
+              handleFilterChange("showEditable", e.currentTarget.checked)
+            }
+            disabled={disabled}
+          />
+        </Box>
       </Group>
     </Paper>
   );

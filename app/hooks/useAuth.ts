@@ -1,54 +1,30 @@
-import { useCallback, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+"use client";
+
+import { useSession, signOut } from "next-auth/react";
 import type { User } from "@/app/types";
+import { hasMasterRole, hasAnyRequiredRole } from "../lib/auth";
 
 export function useAuth() {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: session, status } = useSession();
 
-  useEffect(() => {
-    verifySession()
-      .then(({ user }) => setUser(user))
-      .catch(() => setUser(null))
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  const logout = useCallback(async () => {
-    try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Logout failed");
+  const user: User | null = session?.user
+    ? {
+        id: session.user.id,
+        username: session.user.name || "",
+        roles: session.user.roles || [], // Ensure roles are always an array
+        isMaster: hasMasterRole(session.user.roles || []),
+        hasAccess: session.user.hasAccess || false,
+        weaponPermissions: session.user.weaponPermissions || [],
       }
+    : null;
 
-      setUser(null);
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  }, [router]);
-
-  const verifySession = useCallback(async (): Promise<{ user: User }> => {
-    const response = await fetch("/api/auth/verify", {
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error("Session verification failed");
-    }
-
-    return response.json();
-  }, []);
+  const logout = async () => {
+    await signOut({ callbackUrl: "/login" });
+  };
 
   return {
     user,
-    setUser,
-    isLoading,
+    isLoading: status === "loading",
     logout,
-    verifySession,
   };
 }

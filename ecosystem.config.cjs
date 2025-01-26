@@ -1,12 +1,15 @@
 module.exports = {
   apps: [
     {
-      name: "vod-tracker",
+      name: "alliance-manager",
       script: "bun",
-      args: "run server.js",
+      args: "node_modules/next/dist/bin/next start",
       env: {
+        PORT: 3456,
         NODE_ENV: "production",
+        HOSTNAME: "0.0.0.0",
       },
+      exec_mode: "fork",
       instances: 1,
       autorestart: true,
       watch: false,
@@ -15,9 +18,6 @@ module.exports = {
       out_file: "logs/out.log",
       log_file: "logs/combined.log",
       time: true,
-      env_production: {
-        NODE_ENV: "production",
-      },
     },
   ],
 };

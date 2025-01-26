@@ -1,9 +1,39 @@
-import { useState, useCallback } from "react";
-import type { Member, VodTracking } from "@/app/types";
+import { useState, useCallback, useRef, useEffect } from "react";
+import type { VodTracking } from "@/app/types";
+import { checkAccess } from "@/app/lib/access-control";
+import { useAuth } from "@/app/hooks/useAuth";
 
 export function useVodData() {
+  const { user } = useAuth();
   const [updatingVods, setUpdatingVods] = useState<Set<string>>(new Set());
   const [notesInput, setNotesInput] = useState<Record<string, string>>({});
+  const [gearScoreInput, setGearScoreInput] = useState<Record<string, string>>(
+    {}
+  );
+  const notesTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const gearScoreTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      /* eslint-disable react-hooks/exhaustive-deps */
+      // Copy ref values to avoid closure issues
+      const notesTimeouts = { ...notesTimeoutRef.current };
+      const gearScoreTimeouts = { ...gearScoreTimeoutRef.current };
+      /* eslint-enable react-hooks/exhaustive-deps */
+
+      Object.values(notesTimeouts).forEach((timeout) => clearTimeout(timeout));
+      Object.values(gearScoreTimeouts).forEach((timeout) =>
+        clearTimeout(timeout)
+      );
+    };
+  }, []);
+
+  const validateGearScore = (score: number): number => {
+    if (score < 3000) return 3000;
+    if (score > 5000) return 5000;
+    return score;
+  };
 
   const handleVodCheck = useCallback(
     async (
@@ -14,6 +44,7 @@ export function useVodData() {
       vodTracking: Record<string, VodTracking>,
       updateVodTracking: (newData: Record<string, VodTracking>) => void
     ) => {
+      if (!user || !checkAccess.canEditWeapon(user, primary, secondary)) return;
       try {
         setUpdatingVods((prev) => new Set([...prev, discordId]));
 
@@ -60,7 +91,7 @@ export function useVodData() {
         });
       }
     },
-    []
+    [user]
   );
 
   const handleNotesChange = useCallback(
@@ -72,49 +103,62 @@ export function useVodData() {
       vodTracking: Record<string, VodTracking>,
       updateVodTracking: (newData: Record<string, VodTracking>) => void
     ) => {
-      try {
-        setUpdatingVods((prev) => new Set([...prev, discordId]));
+      if (!user || !checkAccess.canEditWeapon(user, primary, secondary)) return;
 
-        const response = await fetch("/api/vod-update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            discordId,
-            checked: vodTracking[discordId]?.has_vod || false,
-            primary,
-            secondary,
-            notes,
-          }),
-        });
+      // Update local state immediately
+      setNotesInput((prev) => ({ ...prev, [discordId]: notes }));
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to update notes");
-        }
-
-        updateVodTracking({
-          ...vodTracking,
-          [discordId]: {
-            ...vodTracking[discordId],
-            notes,
-          },
-        });
-      } catch (error) {
-        console.error("Failed to update notes:", error);
-        setNotesInput((prev) => ({
-          ...prev,
-          [discordId]: vodTracking[discordId]?.notes || "",
-        }));
-      } finally {
-        setUpdatingVods((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(discordId);
-          return newSet;
-        });
+      // Clear existing timeout for this member
+      if (notesTimeoutRef.current[discordId]) {
+        clearTimeout(notesTimeoutRef.current[discordId]);
       }
+
+      // Set new timeout for API call
+      notesTimeoutRef.current[discordId] = setTimeout(async () => {
+        try {
+          setUpdatingVods((prev) => new Set([...prev, discordId]));
+
+          const response = await fetch("/api/vod-update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              discordId,
+              checked: vodTracking[discordId]?.has_vod || false,
+              primary,
+              secondary,
+              notes,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to update notes");
+          }
+
+          updateVodTracking({
+            ...vodTracking,
+            [discordId]: {
+              ...vodTracking[discordId],
+              notes,
+            },
+          });
+        } catch (error) {
+          console.error("Failed to update notes:", error);
+          setNotesInput((prev) => ({
+            ...prev,
+            [discordId]: vodTracking[discordId]?.notes || "",
+          }));
+        } finally {
+          setUpdatingVods((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(discordId);
+            return newSet;
+          });
+        }
+      }, 1000); // 1 second debounce
     },
-    []
+    [user]
   );
 
   const handleGearCheck = useCallback(
@@ -126,6 +170,7 @@ export function useVodData() {
       vodTracking: Record<string, VodTracking>,
       updateVodTracking: (newData: Record<string, VodTracking>) => void
     ) => {
+      if (!user || !checkAccess.canEditWeapon(user, primary, secondary)) return;
       try {
         setUpdatingVods((prev) => new Set([...prev, discordId]));
 
@@ -164,7 +209,7 @@ export function useVodData() {
         });
       }
     },
-    []
+    [user]
   );
 
   const handleGearScoreChange = useCallback(
@@ -176,48 +221,79 @@ export function useVodData() {
       vodTracking: Record<string, VodTracking>,
       updateVodTracking: (newData: Record<string, VodTracking>) => void
     ) => {
-      try {
-        setUpdatingVods((prev) => new Set([...prev, discordId]));
+      // Only allow numbers and empty string
+      if (score !== "" && !/^\d+$/.test(score)) return;
 
-        const response = await fetch("/api/vod-update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            discordId,
-            primary,
-            secondary,
-            gear_score: score === "" ? null : parseInt(score) || null,
-          }),
-        });
+      if (!user || !checkAccess.canEditWeapon(user, primary, secondary)) return;
 
-        if (!response.ok) {
-          throw new Error("Failed to update gear score");
-        }
+      // Update local state immediately
+      setGearScoreInput((prev) => ({ ...prev, [discordId]: score }));
 
-        updateVodTracking({
-          ...vodTracking,
-          [discordId]: {
-            ...vodTracking[discordId],
-            gear_score: score,
-          },
-        });
-      } catch (error) {
-        console.error("Failed to update gear score:", error);
-      } finally {
-        setUpdatingVods((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(discordId);
-          return newSet;
-        });
+      // Clear existing timeout for this member
+      if (gearScoreTimeoutRef.current[discordId]) {
+        clearTimeout(gearScoreTimeoutRef.current[discordId]);
       }
+
+      // Set new timeout for API call
+      gearScoreTimeoutRef.current[discordId] = setTimeout(async () => {
+        try {
+          setUpdatingVods((prev) => new Set([...prev, discordId]));
+
+          // Validate score before sending to API
+          const validatedScore =
+            score === "" ? null : validateGearScore(parseInt(score));
+
+          const response = await fetch("/api/vod-update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              discordId,
+              primary,
+              secondary,
+              gear_score: validatedScore,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to update gear score");
+          }
+
+          // Update local state with validated score
+          const displayScore =
+            validatedScore === null ? "" : validatedScore.toString();
+          setGearScoreInput((prev) => ({ ...prev, [discordId]: displayScore }));
+
+          updateVodTracking({
+            ...vodTracking,
+            [discordId]: {
+              ...vodTracking[discordId],
+              gear_score: displayScore,
+            },
+          });
+        } catch (error) {
+          console.error("Failed to update gear score:", error);
+          // Reset to previous value on error
+          setGearScoreInput((prev) => ({
+            ...prev,
+            [discordId]: vodTracking[discordId]?.gear_score || "",
+          }));
+        } finally {
+          setUpdatingVods((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(discordId);
+            return newSet;
+          });
+        }
+      }, 1000); // 1 second debounce
     },
-    []
+    [user]
   );
 
   return {
     updatingVods,
     notesInput,
+    gearScoreInput,
     setNotesInput,
     handleVodCheck,
     handleNotesChange,

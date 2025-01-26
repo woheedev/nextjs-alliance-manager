@@ -14,6 +14,9 @@ import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { StaticGroup } from "./StaticGroup";
 import { MemberList } from "./MemberList";
 import type { Member, Static } from "@/app/types";
+import { checkAccess } from "@/app/lib/access-control";
+import { useAuth } from "@/app/hooks/useAuth";
+import { CLASS_COLORS } from "@/app/types/classes";
 
 interface StaticsViewProps {
   members: Member[];
@@ -23,8 +26,11 @@ interface StaticsViewProps {
 const GUILDS = ["Guild A", "Guild B"]; // Replace with actual guild names
 
 export function StaticsView({ members, statics }: StaticsViewProps) {
+  const { user } = useAuth();
   const [selectedGuild, setSelectedGuild] = useState(GUILDS[0]);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [updatingMembers, setUpdatingMembers] = useState<Set<string>>(
+    new Set()
+  );
 
   const handleDragEnd = useCallback(async (result: DropResult) => {
     if (!result.destination) return;
@@ -32,7 +38,7 @@ export function StaticsView({ members, statics }: StaticsViewProps) {
     const { source, destination, draggableId } = result;
 
     try {
-      setIsUpdating(true);
+      setUpdatingMembers((prev) => new Set(prev).add(draggableId));
 
       const response = await fetch("/api/statics/update", {
         method: "POST",
@@ -50,15 +56,19 @@ export function StaticsView({ members, statics }: StaticsViewProps) {
       if (!response.ok) {
         throw new Error("Failed to update static group");
       }
-
-      // Optimistically update UI
-      // You would need to implement this based on your data structure
     } catch (error) {
       console.error("Failed to update static group:", error);
     } finally {
-      setIsUpdating(false);
+      setUpdatingMembers((prev) => {
+        const next = new Set(prev);
+        next.delete(draggableId);
+        return next;
+      });
     }
   }, []);
+
+  // Add access check after hooks
+  if (!user || !checkAccess.isMaster(user)) return null;
 
   return (
     <Container fluid>
@@ -79,7 +89,8 @@ export function StaticsView({ members, statics }: StaticsViewProps) {
             <Grid.Col span={3}>
               <MemberList
                 members={members.filter((m) => m.guild === selectedGuild)}
-                isUpdating={isUpdating}
+                updatingMembers={updatingMembers}
+                classColors={CLASS_COLORS}
               />
             </Grid.Col>
             <Grid.Col span={9}>
@@ -89,7 +100,9 @@ export function StaticsView({ members, statics }: StaticsViewProps) {
                     <StaticGroup
                       group={i + 1}
                       members={statics.filter((s) => s.group === i + 1)}
-                      isUpdating={isUpdating}
+                      updatingMembers={updatingMembers}
+                      classColors={CLASS_COLORS}
+                      selectedGuild={selectedGuild}
                     />
                   </Grid.Col>
                 ))}

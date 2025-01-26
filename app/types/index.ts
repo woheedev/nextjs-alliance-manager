@@ -9,6 +9,7 @@ export interface User {
   id: string;
   username: string;
   roles: string[];
+  image?: string;
   isMaster: boolean;
   hasAccess: boolean;
   weaponPermissions?: Array<{
@@ -18,15 +19,19 @@ export interface User {
 }
 
 // Database types
+import { ClassType } from "./classes";
+
 export interface Member {
   $id: string;
   discord_id: string;
   discord_username: string;
+  discord_nickname?: string;
   ingame_name: string;
   guild: string;
   primary_weapon: string;
   secondary_weapon: string;
   has_thread: boolean;
+  class?: ClassType;
 }
 
 export interface VodTracking {
@@ -57,3 +62,10 @@ export interface MemberCache {
 }
 
 export type { FilterValues } from "./components";
+
+export interface AllData {
+  members: Member[];
+  uniqueValues: UniqueValues;
+  vodTracking: Record<string, VodTracking>;
+  statics: Static[];
+}

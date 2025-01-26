@@ -1,7 +1,5 @@
 import type { User } from "@/app/types";
-
-// Constants for role IDs
-export const MASTER_ROLE_IDS = ["1309271313398894643", "1309284427553312769"];
+import { MASTER_ROLES } from "@/app/config";
 
 // Memoization cache for performance
 const memoCache = new Map();
@@ -48,14 +46,14 @@ export const hasMasterRole = (roles: string[]): boolean => {
     return memoCache.get(cacheKey);
   }
 
-  const result = roles.some((role) => MASTER_ROLE_IDS.includes(role));
+  const result = roles.some((role) => MASTER_ROLES.includes(role));
   memoCache.set(cacheKey, result);
   return result;
 };
 
 export const hasAnyRequiredRole = (roles: string[]): boolean => {
   if (!roles?.length) return false;
-  return roles.some((role) => MASTER_ROLE_IDS.includes(role));
+  return roles.some((role) => MASTER_ROLES.includes(role));
 };
 
 // Clear cache when needed (e.g., on logout)
