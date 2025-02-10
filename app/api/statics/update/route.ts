@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databases } from "@/app/lib/appwrite";
-import { config } from "@/app/config";
+import { config } from "@/app/config/index";
 import { ID, Query } from "node-appwrite";
 import { getServerSession } from "next-auth";
 import { checkAccess } from "@/app/lib/access-control";
-import { hasMasterRole } from "@/app/lib/auth";
 import { authOptions } from "@/app/lib/auth-options";
 
 interface StaticUpdateBody {
@@ -57,9 +56,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const hasAccess = hasMasterRole(session.user.roles || []);
-
-    if (!hasAccess) {
+    if (!checkAccess.isLeadership(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

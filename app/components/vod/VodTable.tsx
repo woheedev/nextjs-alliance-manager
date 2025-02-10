@@ -11,8 +11,9 @@ import {
   Tooltip,
   Box,
   LoadingOverlay,
+  Button,
 } from "@mantine/core";
-import { IconRefresh } from "@tabler/icons-react";
+import { IconRefresh, IconExternalLink } from "@tabler/icons-react";
 import type { VodTableProps } from "@/app/types/components";
 import { useAuth } from "@/app/hooks/useAuth";
 import { formatDate } from "@/app/lib/utils";
@@ -49,6 +50,9 @@ export function VodTable({
             <Table.Th style={{ whiteSpace: "nowrap" }}>Secondary</Table.Th>
             <Table.Th style={{ whiteSpace: "nowrap", textAlign: "center" }}>
               Ticket
+            </Table.Th>
+            <Table.Th style={{ whiteSpace: "nowrap", textAlign: "center" }}>
+              Thread
             </Table.Th>
             <Table.Th style={{ whiteSpace: "nowrap", textAlign: "center" }}>
               VOD
@@ -105,6 +109,48 @@ export function VodTable({
                     >
                       {member.has_thread ? "✓" : "✕"}
                     </Badge>
+                  </Table.Td>
+                  <Table.Td style={{ textAlign: "center" }}>
+                    {member.thread_link && (
+                      <Button.Group>
+                        <Button
+                          component="a"
+                          href={member.thread_link.replace(
+                            "https://discord.com",
+                            "discord:"
+                          )}
+                          variant="filled"
+                          color="indigo"
+                          size="xs"
+                          style={{
+                            borderTopRightRadius: 0,
+                            borderBottomRightRadius: 0,
+                            padding: "2px 6px",
+                            height: "22px",
+                          }}
+                        >
+                          Open
+                        </Button>
+                        <Button
+                          component="a"
+                          href={member.thread_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          variant="filled"
+                          color="indigo"
+                          size="xs"
+                          style={{
+                            borderTopLeftRadius: 0,
+                            borderBottomLeftRadius: 0,
+                            borderLeft: "1px solid rgba(255, 255, 255, 0.3)",
+                            padding: "2px",
+                            height: "22px",
+                          }}
+                        >
+                          <IconExternalLink size={12} />
+                        </Button>
+                      </Button.Group>
+                    )}
                   </Table.Td>
                   <Table.Td style={{ textAlign: "center" }}>
                     {updatingVods.has(member.discord_id) && (

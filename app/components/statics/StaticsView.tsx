@@ -68,7 +68,7 @@ export function StaticsView({ members, statics }: StaticsViewProps) {
   }, []);
 
   // Add access check after hooks
-  if (!user || !checkAccess.isMaster(user)) return null;
+  if (!user || !checkAccess.isLeadership(user)) return null;
 
   return (
     <Container fluid>

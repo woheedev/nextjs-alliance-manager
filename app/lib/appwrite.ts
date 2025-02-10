@@ -1,21 +1,23 @@
 import { Client, Databases } from "node-appwrite";
-import { config } from "../config";
+import { config } from "@/app/config/index";
 import { MemberCache } from "../types";
 
 function validateEnvVars() {
   const required = [
-    "APPWRITE_ENDPOINT",
-    "APPWRITE_PROJECT_ID",
-    "APPWRITE_API_KEY",
-    "APPWRITE_DATABASE_ID",
-    "APPWRITE_VOD_COLLECTION_ID",
+    "endpoint",
+    "projectId",
+    "apiKey",
+    "databaseId",
+    "vodCollectionId",
   ];
 
-  const missing = required.filter((key) => !process.env[key]);
+  const missing = required.filter(
+    (key) => !config.appwrite[key as keyof typeof config.appwrite]
+  );
 
   if (missing.length > 0) {
     throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}`
+      `Missing required Appwrite configuration: ${missing.join(", ")}`
     );
   }
 }
@@ -25,9 +27,9 @@ validateEnvVars();
 
 // Initialize Appwrite
 const client = new Client()
-  .setEndpoint(process.env.APPWRITE_ENDPOINT!)
-  .setProject(process.env.APPWRITE_PROJECT_ID!)
-  .setKey(process.env.APPWRITE_API_KEY!);
+  .setEndpoint(config.appwrite.endpoint)
+  .setProject(config.appwrite.projectId)
+  .setKey(config.appwrite.apiKey);
 
 export const databases = new Databases(client);
 

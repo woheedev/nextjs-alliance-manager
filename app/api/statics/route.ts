@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databases } from "@/app/lib/appwrite";
-import { config } from "@/app/config";
+import { config } from "@/app/config/index";
 import { Query } from "node-appwrite";
 import { getServerSession } from "next-auth";
 import { checkAccess } from "@/app/lib/access-control";
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!checkAccess.isMaster(session.user)) {
+    if (!checkAccess.isLeadership(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/hooks/useAuth";
+import { checkAccess } from "@/app/lib/access-control";
 import { LoadingOverlay } from "./components/common/LoadingOverlay";
 
 export default function HomePage() {
@@ -11,7 +12,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (user) {
+      if (user && checkAccess.hasAnyAccess(user)) {
         router.push("/vodtracker");
       } else {
         router.push("/login");

@@ -30,18 +30,22 @@ export function Header() {
 
   const getAccessBadge = () => {
     const accessLevel = checkAccess.getAccessLevel(user);
+    const isWeaponLead = checkAccess.isWeaponLead(user);
+    const isMaster = checkAccess.isMaster(user);
+
+    if (isWeaponLead && isMaster) {
+      return (
+        <Badge
+          variant="gradient"
+          gradient={{ from: "red", to: "green", deg: 90 }}
+          size="sm"
+        >
+          Master + Weapon Lead
+        </Badge>
+      );
+    }
 
     switch (accessLevel) {
-      case "both":
-        return (
-          <Badge
-            variant="gradient"
-            gradient={{ from: "red", to: "green", deg: 90 }}
-            size="sm"
-          >
-            Master + Weapon Lead
-          </Badge>
-        );
       case "master":
         return (
           <Badge color="red" size="sm">

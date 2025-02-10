@@ -12,6 +12,7 @@ export function TableSkeleton({ rows = 10, columns = 12 }: TableSkeletonProps) {
           <Table.Th>Primary</Table.Th>
           <Table.Th>Secondary</Table.Th>
           <Table.Th>Ticket</Table.Th>
+          <Table.Th>Thread</Table.Th>
           <Table.Th>VOD</Table.Th>
           <Table.Th>Checked</Table.Th>
           <Table.Th>Gear</Table.Th>

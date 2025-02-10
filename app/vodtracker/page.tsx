@@ -18,12 +18,15 @@ import { LoadingOverlay } from "@/app/components/common/LoadingOverlay";
 import { useVodData } from "@/app/hooks/useVodData";
 import { useAllData } from "@/app/hooks/useAllData";
 import { useAccess } from "@/app/hooks/useAccess";
-import { AccessRules, checkAccess } from "@/app/lib/access-control";
+import { checkAccess } from "@/app/lib/access-control";
 import type { FilterValues, Member } from "@/app/types";
 
 export default function VodTrackerPage() {
   const { isLoading, user } = useAuth();
-  const { hasAccess } = useAccess(AccessRules.weaponLead);
+  const { hasAccess } = useAccess({
+    requiresAuth: true,
+    check: (user) => checkAccess.hasAnyAccess(user),
+  });
   const { data, loading, error, mutate } = useAllData();
   const [filters, setFilters] = useState<FilterValues>({
     guild: "",
@@ -89,11 +92,9 @@ export default function VodTrackerPage() {
 
     // Filter by editable status if the option is selected
     if (filters.showEditable && user) {
-      const canEdit = checkAccess.canEditWeapon(
-        user,
-        m.primary_weapon,
-        m.secondary_weapon
-      );
+      const canEdit =
+        checkAccess.isLeadership(user) ||
+        checkAccess.canEditWeapon(user, m.primary_weapon, m.secondary_weapon);
       if (!canEdit) {
         return false;
       }

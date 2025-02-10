@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databases } from "@/app/lib/appwrite";
-import { config } from "@/app/config";
+import { config } from "@/app/config/index";
 import { fetchAndCacheMemberData } from "@/app/lib/members";
 import { Query } from "node-appwrite";
 import type { VodTracking } from "@/app/types";

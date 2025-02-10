@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databases } from "@/app/lib/appwrite";
-import { MAX_NOTES_LENGTH } from "@/app/config";
+import { MAX_NOTES_LENGTH } from "@/app/config/constants";
 import { Query } from "node-appwrite";
 import { getServerSession } from "next-auth";
 import { checkAccess } from "@/app/lib/access-control";
 import { authOptions } from "@/app/lib/auth-options";
+import { config } from "@/app/config";
 
 interface VodUpdateBody {
   discordId: string;
@@ -65,19 +66,22 @@ const validateVodUpdate = async (
     }
   }
 
-  // Check if user has a thread
-  const response = await databases.listDocuments(
-    process.env.APPWRITE_DATABASE_ID!,
-    process.env.APPWRITE_VOD_COLLECTION_ID!,
+  // Check if user has a thread in member collection
+  console.log(`[VOD Update] Checking thread status for user ${discordId}`);
+  const memberResponse = await databases.listDocuments(
+    config.appwrite.databaseId,
+    config.appwrite.collectionId,
     [Query.equal("discord_id", discordId)]
   );
 
-  if (!response.documents.length) {
-    throw new Error("User not found");
+  if (!memberResponse.documents.length) {
+    console.log(`[VOD Update] Member not found: ${discordId}`);
+    throw new Error("Member not found");
   }
 
-  if (!response.documents[0].has_thread) {
-    throw new Error("User must have a ticket thread before updating");
+  if (!memberResponse.documents[0].has_thread) {
+    console.log(`[VOD Update] Member has no thread: ${discordId}`);
+    throw new Error("Member must have a ticket thread before updating");
   }
 };
 
@@ -115,32 +119,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       has_vod: checked,
       vod_check_lead: checked ? session.user.name : null,
       gear_check_lead: rest.gear_checked ? session.user.name : null,
-      // Ensure gear score is within valid range
+      // Ensure gear score is a valid integer or null
       gear_score: rest.gear_score
-        ? Math.min(Math.max(parseInt(rest.gear_score), 3000), 5000).toString()
+        ? Math.min(Math.max(parseInt(rest.gear_score), 3000), 5000)
         : null,
     };
 
     // First try to find existing document
     const existingDoc = await databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_VOD_COLLECTION_ID!,
+      config.appwrite.databaseId,
+      config.appwrite.vodCollectionId,
       [Query.equal("discord_id", discordId)]
     );
 
     if (existingDoc.documents.length > 0) {
       // Update existing document
       await databases.updateDocument(
-        process.env.APPWRITE_DATABASE_ID!,
-        process.env.APPWRITE_VOD_COLLECTION_ID!,
+        config.appwrite.databaseId,
+        config.appwrite.vodCollectionId,
         existingDoc.documents[0].$id,
         updateData
       );
     } else {
       // Create new document with auto-generated ID
       await databases.createDocument(
-        process.env.APPWRITE_DATABASE_ID!,
-        process.env.APPWRITE_VOD_COLLECTION_ID!,
+        config.appwrite.databaseId,
+        config.appwrite.vodCollectionId,
         "unique()",
         {
           discord_id: discordId,

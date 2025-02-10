@@ -1,23 +1,4 @@
-export const config = {
-  discord: {
-    clientId: process.env.DISCORD_CLIENT_ID!,
-    clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-    guildId: process.env.DISCORD_GUILD_ID!,
-  },
-  appwrite: {
-    endpoint: process.env.APPWRITE_ENDPOINT!,
-    projectId: process.env.APPWRITE_PROJECT_ID!,
-    apiKey: process.env.APPWRITE_API_KEY!,
-    databaseId: process.env.APPWRITE_DATABASE_ID!,
-    collectionId: process.env.APPWRITE_COLLECTION_ID!,
-    vodCollectionId: process.env.APPWRITE_VOD_COLLECTION_ID!,
-    staticsCollectionId: process.env.APPWRITE_STATICS_COLLECTION_ID!,
-  },
-};
-
 export const DISCORD_API = "https://discord.com/api/v10";
-export const MAX_NOTES_LENGTH = 500;
-export const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 interface WeaponRole {
   primary: string;
@@ -43,4 +24,23 @@ export const WEAPON_LEAD_ROLES: Record<string, WeaponRole> = {
   "1323123243959451671": { primary: "Xbow", secondary: "Dagger" },
 };
 
+export const LEADERSHIP_ROLES = ["1309271313398894643"];
 export const MASTER_ROLES = ["1309271313398894643", "1309284427553312769"];
+
+export const discordConfig = {
+  clientId: process.env.DISCORD_CLIENT_ID!,
+  clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+  guildId: process.env.DISCORD_GUILD_ID!,
+  guilds: {
+    guild1: process.env.DISCORD_GUILD_1_NAME!,
+    guild2: process.env.DISCORD_GUILD_2_NAME!,
+    guild3: process.env.DISCORD_GUILD_3_NAME!,
+    guild4: process.env.DISCORD_GUILD_4_NAME!,
+  },
+  webhooks: {
+    guild1: process.env.DISCORD_GUILD_1_WEBHOOK!,
+    guild2: process.env.DISCORD_GUILD_2_WEBHOOK!,
+    guild3: process.env.DISCORD_GUILD_3_WEBHOOK!,
+    guild4: process.env.DISCORD_GUILD_4_WEBHOOK!,
+  },
+};

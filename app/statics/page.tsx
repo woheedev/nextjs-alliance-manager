@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Stack, SegmentedControl, Grid } from "@mantine/core";
+import { Stack, SegmentedControl, Grid, Group } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useAllData } from "@/app/hooks/useAllData";
@@ -13,6 +13,7 @@ import { MemberList } from "@/app/components/statics/MemberList";
 import { StaticGroup } from "@/app/components/statics/StaticGroup";
 import type { Member, Static, AllData } from "@/app/types";
 import { CLASS_COLORS, CLASS_ORDER } from "@/app/types/classes";
+import { WebhookButton } from "@/app/components/statics/WebhookButton";
 
 // Helper function to sort members by class order and then alphabetically
 const sortMembersByClass = (members: Member[]) => {
@@ -52,7 +53,9 @@ const getMaxMembersInRow = (
 export default function StaticsPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { hasAccess, isLoading: accessLoading } = useAccess(AccessRules.master);
+  const { hasAccess, isLoading: accessLoading } = useAccess(
+    AccessRules.leadership
+  );
   const {
     data: initialData,
     loading: dataLoading,
@@ -231,15 +234,17 @@ export default function StaticsPage() {
 
   return (
     <Stack gap="md">
-      <SegmentedControl
-        data={data.uniqueValues.guilds.map((guild: string) => ({
-          label: guild,
-          value: guild,
-        }))}
-        value={selectedGuild}
-        onChange={setSelectedGuild}
-        fullWidth
-      />
+      <Group justify="space-between">
+        <SegmentedControl
+          data={data.uniqueValues.guilds.map((guild: string) => ({
+            label: guild,
+            value: guild,
+          }))}
+          value={selectedGuild}
+          onChange={setSelectedGuild}
+        />
+        <WebhookButton selectedGuild={selectedGuild} />
+      </Group>
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div style={{ position: "relative" }}>

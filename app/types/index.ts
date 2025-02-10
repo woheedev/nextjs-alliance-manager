@@ -31,6 +31,7 @@ export interface Member {
   primary_weapon: string;
   secondary_weapon: string;
   has_thread: boolean;
+  thread_link?: string | null;
   class?: ClassType;
 }
 

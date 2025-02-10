@@ -1,4 +1,4 @@
-import { AccessRules } from "@/app/lib/access-control";
+import { AccessRules, checkAccess } from "@/app/lib/access-control";
 import type { User } from "@/app/types";
 
 export interface NavItem {
@@ -13,11 +13,11 @@ export const navigation: NavItem[] = [
   {
     link: "/vodtracker",
     label: "VOD Tracker",
-    access: AccessRules.weaponLead,
+    access: { check: (user: User) => checkAccess.hasAnyAccess(user) },
   },
   {
     link: "/statics",
     label: "Statics",
-    access: AccessRules.master,
+    access: AccessRules.leadership,
   },
 ];

@@ -70,7 +70,7 @@ export function useVodData() {
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || "Failed to update VOD status");
+          throw new Error(error.message || "Failed to update VOD status");
         }
 
         updateVodTracking({

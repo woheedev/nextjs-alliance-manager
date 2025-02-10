@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import type { AllData } from "@/app/types";
+import { checkAccess } from "@/app/lib/access-control";
 
 export function useAllData() {
   const { data: session } = useSession();
@@ -24,15 +25,20 @@ export function useAllData() {
   }, []);
 
   useEffect(() => {
-    if (session) {
+    if (session?.user && checkAccess.hasAnyAccess(session.user)) {
       fetchData();
+    } else {
+      setLoading(false);
     }
   }, [session, fetchData]);
 
   const mutate = useCallback(() => {
-    setLoading(true);
-    return fetchData();
-  }, [fetchData]);
+    if (session?.user && checkAccess.hasAnyAccess(session.user)) {
+      setLoading(true);
+      return fetchData();
+    }
+    return Promise.resolve();
+  }, [fetchData, session]);
 
   return { data, loading, error, mutate };
 }

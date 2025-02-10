@@ -1,6 +1,7 @@
 import { Query } from "node-appwrite";
 import { databases } from "./appwrite";
-import { config, CACHE_TTL } from "../config";
+import { config } from "@/app/config/index";
+import { CACHE_TTL } from "@/app/config/constants";
 import { memberCache } from "./appwrite";
 import type { Member, UniqueValues } from "../types";
 

@@ -1,15 +1,8 @@
 .title {
   font-family: "Inter", sans-serif;
-  font-weight: 900;
-  font-size: 2rem;
-  letter-spacing: -1px;
+  font-size: 4rem;
+  letter-spacing: 3px;
   margin-bottom: var(--mantine-spacing-md);
-  background: linear-gradient(
-    45deg,
-    var(--mantine-color-blue-filled) 0%,
-    var(--mantine-color-indigo-filled) 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: rgb(236, 236, 236);
   background-clip: text;
 }

@@ -1,6 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
-import { config, WEAPON_LEAD_ROLES } from "@/app/config";
+import { config, WEAPON_LEAD_ROLES } from "@/app/config/index";
 import { hasMasterRole } from "./auth";
 import { checkAccess } from "./access-control";
 import type { User } from "@/app/types";
