@@ -46,7 +46,7 @@ export const checkAccess = {
     return hasLeadershipRole(roles);
   },
   canEditWeapon: (user: User, primary: string, secondary: string) =>
-    hasLeadershipRole(user.roles) ||
+    hasMasterRole(user.roles) ||
     hasWeaponLeadPermission(user, primary, secondary),
   hasAnyAccess: (user: User) => user.hasAccess || hasMasterRole(user.roles),
   getAccessLevel: (

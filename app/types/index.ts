@@ -69,4 +69,5 @@ export interface AllData {
   uniqueValues: UniqueValues;
   vodTracking: Record<string, VodTracking>;
   statics: Static[];
+  staticsPreset2: Static[];
 }

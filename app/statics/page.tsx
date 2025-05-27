@@ -64,6 +64,7 @@ export default function StaticsPage() {
   } = useAllData();
   const [data, setData] = useState<AllData | null>(initialData);
   const [selectedGuild, setSelectedGuild] = useState<string>("");
+  const [selectedPreset, setSelectedPreset] = useState<string>("preset1");
   const [mounted, setMounted] = useState(false);
   const [updatingMembers, setUpdatingMembers] = useState<Set<string>>(
     new Set()
@@ -122,6 +123,7 @@ export default function StaticsPage() {
   }
   if (!data) return null;
 
+  // Handle drag end based on selected preset
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination || !data) return;
 
@@ -150,9 +152,12 @@ export default function StaticsPage() {
             : parseInt(destination.droppableId.split("-")[1]) + 1;
 
         // Optimistically update the UI by updating local state
-        const updatedStatics = data.statics.filter(
+        const staticsKey =
+          selectedPreset === "preset1" ? "statics" : "staticsPreset2";
+        const updatedStatics = data[staticsKey].filter(
           (s: Static) => s.discord_id !== draggableId
         );
+
         if (group !== null) {
           // Find the member data to include in the static
           const memberData = data.members.find(
@@ -170,12 +175,17 @@ export default function StaticsPage() {
           if (!currentData) return null;
           return {
             ...currentData,
-            statics: updatedStatics,
+            [staticsKey]: updatedStatics,
           };
         });
 
         // Make API call in background
-        const response = await fetch("/api/statics/update", {
+        const endpoint =
+          selectedPreset === "preset1"
+            ? "/api/statics/update"
+            : "/api/statics/preset2/update";
+
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -211,7 +221,11 @@ export default function StaticsPage() {
   const guildMembers = data.members.filter(
     (m: Member) => m.guild === selectedGuild
   );
-  const staticMembers = data.statics.filter((s: Static) =>
+
+  // Get the correct statics data based on selected preset
+  const staticMembers = (
+    selectedPreset === "preset1" ? data.statics : data.staticsPreset2
+  ).filter((s: Static) =>
     guildMembers.some((m: Member) => m.discord_id === s.discord_id)
   );
 
@@ -232,18 +246,38 @@ export default function StaticsPage() {
     )
   );
 
+  // Handle preset change
+  const handlePresetChange = (preset: string) => {
+    setSelectedPreset(preset);
+    // Reset any ongoing updates
+    setUpdatingMembers(new Set());
+  };
+
   return (
     <Stack gap="md">
       <Group justify="space-between">
-        <SegmentedControl
-          data={data.uniqueValues.guilds.map((guild: string) => ({
-            label: guild,
-            value: guild,
-          }))}
-          value={selectedGuild}
-          onChange={setSelectedGuild}
+        <Group>
+          <SegmentedControl
+            data={[
+              { label: "Preset 1", value: "preset1" },
+              { label: "Preset 2", value: "preset2" },
+            ]}
+            value={selectedPreset}
+            onChange={handlePresetChange}
+          />
+          <SegmentedControl
+            data={data.uniqueValues.guilds.map((guild: string) => ({
+              label: guild,
+              value: guild,
+            }))}
+            value={selectedGuild}
+            onChange={setSelectedGuild}
+          />
+        </Group>
+        <WebhookButton
+          selectedGuild={selectedGuild}
+          selectedPreset={selectedPreset}
         />
-        <WebhookButton selectedGuild={selectedGuild} />
       </Group>
 
       <DragDropContext onDragEnd={handleDragEnd}>

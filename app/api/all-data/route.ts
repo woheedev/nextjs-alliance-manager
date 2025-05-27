@@ -13,7 +13,7 @@ interface VodMap {
 
 const BATCH_SIZE = 100;
 
-async function fetchAllStatics() {
+async function fetchAllStaticsPreset1() {
   const countResponse = await databases.listDocuments(
     config.appwrite.databaseId,
     config.appwrite.staticsCollectionId,
@@ -33,6 +33,38 @@ async function fetchAllStatics() {
     const response = await databases.listDocuments(
       config.appwrite.databaseId,
       config.appwrite.staticsCollectionId,
+      [
+        Query.limit(BATCH_SIZE),
+        Query.offset(i * BATCH_SIZE),
+        Query.orderAsc("group"),
+      ]
+    );
+    allStatics.push(...response.documents);
+  }
+
+  return allStatics;
+}
+
+async function fetchAllStaticsPreset2() {
+  const countResponse = await databases.listDocuments(
+    config.appwrite.databaseId,
+    config.appwrite.staticsPreset2CollectionId,
+    [Query.limit(1)]
+  );
+  const total = countResponse.total;
+
+  // Skip if no records exist
+  if (total === 0) {
+    return [];
+  }
+
+  const batches = Math.ceil(total / BATCH_SIZE);
+  const allStatics = [];
+
+  for (let i = 0; i < batches; i++) {
+    const response = await databases.listDocuments(
+      config.appwrite.databaseId,
+      config.appwrite.staticsPreset2CollectionId,
       [
         Query.limit(BATCH_SIZE),
         Query.offset(i * BATCH_SIZE),
@@ -107,14 +139,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       };
     });
 
-    // Fetch statics data using batch fetching
-    const statics = await fetchAllStatics();
+    // Fetch statics data for both presets
+    const [staticsPreset1, staticsPreset2] = await Promise.all([
+      fetchAllStaticsPreset1(),
+      fetchAllStaticsPreset2(),
+    ]);
 
     return NextResponse.json({
       members: memberData.members,
       uniqueValues: memberData.uniqueValues,
       vodTracking: vodMap,
-      statics,
+      statics: staticsPreset1,
+      staticsPreset2: staticsPreset2,
     });
   } catch (error) {
     console.error("[API ERROR] Error fetching all data:", error);

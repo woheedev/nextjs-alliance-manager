@@ -4,9 +4,13 @@ import { IconBrandDiscord } from "@tabler/icons-react";
 
 interface WebhookButtonProps {
   selectedGuild: string;
+  selectedPreset: string;
 }
 
-export function WebhookButton({ selectedGuild }: WebhookButtonProps) {
+export function WebhookButton({
+  selectedGuild,
+  selectedPreset,
+}: WebhookButtonProps) {
   const [opened, setOpened] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +27,7 @@ export function WebhookButton({ selectedGuild }: WebhookButtonProps) {
         credentials: "same-origin",
         body: JSON.stringify({
           guild: selectedGuild,
+          preset: selectedPreset,
         }),
       });
 
@@ -59,7 +64,9 @@ export function WebhookButton({ selectedGuild }: WebhookButtonProps) {
         <Stack>
           <Text>
             Are you sure you want to send the current static configuration for{" "}
-            {selectedGuild} to Discord?
+            {selectedGuild} (
+            {selectedPreset === "preset1" ? "Preset 1" : "Preset 2"}) to
+            Discord?
           </Text>
           <Button
             onClick={handleSubmit}

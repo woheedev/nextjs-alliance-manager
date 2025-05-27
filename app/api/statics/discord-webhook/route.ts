@@ -10,10 +10,15 @@ import { checkAccess } from "@/app/lib/access-control";
 const BATCH_SIZE = 100;
 
 // Helper function to fetch all statics
-async function fetchAllStatics() {
+async function fetchAllStatics(preset: string) {
+  const collectionId =
+    preset === "preset1"
+      ? config.appwrite.staticsCollectionId
+      : config.appwrite.staticsPreset2CollectionId;
+
   const countResponse = await databases.listDocuments(
     config.appwrite.databaseId,
-    config.appwrite.staticsCollectionId,
+    collectionId,
     [Query.limit(1)]
   );
   const total = countResponse.total;
@@ -24,7 +29,7 @@ async function fetchAllStatics() {
   for (let i = 0; i < batches; i++) {
     const response = await databases.listDocuments(
       config.appwrite.databaseId,
-      config.appwrite.staticsCollectionId,
+      collectionId,
       [
         Query.limit(BATCH_SIZE),
         Query.offset(i * BATCH_SIZE),
@@ -131,7 +136,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const { guild } = await request.json();
+    const { guild, preset = "preset1" } = await request.json();
 
     if (!guild) {
       return NextResponse.json({ error: "Missing guild" }, { status: 400 });
@@ -147,7 +152,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Fetch all statics and members
     const [staticsResponse, membersResponse] = await Promise.all([
-      fetchAllStatics(),
+      fetchAllStatics(preset),
       fetchAllMembers(),
     ]);
 
@@ -194,7 +199,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     // Create a single embed for all groups
-    const embed = createStaticGroupEmbed(groupedStatics, guild);
+    const presetName = preset === "preset1" ? "Preset 1" : "Preset 2";
+    const embed = createStaticGroupEmbed(
+      groupedStatics,
+      `${guild} - ${presetName}`
+    );
 
     // Send the embed to Discord webhook
     const response = await fetch(webhookUrl, {
